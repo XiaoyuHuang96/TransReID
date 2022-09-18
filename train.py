@@ -1,6 +1,7 @@
+from processor.processor import do_train_with_distillation
 from utils.logger import setup_logger
 from datasets import make_dataloader
-from model import make_model
+from model import make_model,make_ref_model
 from solver import make_optimizer
 from solver.scheduler_factory import create_scheduler
 from loss import make_loss
@@ -67,21 +68,40 @@ if __name__ == '__main__':
 
     model = make_model(cfg, num_class=num_classes, camera_num=camera_num, view_num = view_num)
 
+    ref_model = None
+    if(len(cfg.MODEL.REF_MODEL_PATH) > 0):
+        ref_model = make_ref_model(cfg, num_class=num_classes, camera_num=camera_num, view_num = view_num)
+
     loss_func, center_criterion = make_loss(cfg, num_classes=num_classes)
 
     optimizer, optimizer_center = make_optimizer(cfg, model, center_criterion)
 
     scheduler = create_scheduler(cfg, optimizer)
 
-    do_train(
-        cfg,
-        model,
-        center_criterion,
-        train_loader,
-        val_loader,
-        optimizer,
-        optimizer_center,
-        scheduler,
-        loss_func,
-        num_query, args.local_rank
-    )
+    if(ref_model is None):
+        do_train(
+            cfg,
+            model,
+            center_criterion,
+            train_loader,
+            val_loader,
+            optimizer,
+            optimizer_center,
+            scheduler,
+            loss_func,
+            num_query, args.local_rank
+        )
+    else:
+        do_train_with_distillation(
+            cfg,
+            model,
+            ref_model,
+            center_criterion,
+            train_loader,
+            val_loader,
+            optimizer,
+            optimizer_center,
+            scheduler,
+            loss_func,
+            num_query, args.local_rank
+        )

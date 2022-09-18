@@ -68,6 +68,11 @@ _C.MODEL.SIE_COE = 3.0
 _C.MODEL.SIE_CAMERA = False
 _C.MODEL.SIE_VIEW = False
 
+# Distillation Parameter
+# reference model 
+_C.MODEL.REF_NAME = "transformer"
+_C.MODEL.REF_MODEL_PATH = ""
+
 # -----------------------------------------------------------------------------
 # INPUT
 # -----------------------------------------------------------------------------

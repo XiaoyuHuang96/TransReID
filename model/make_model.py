@@ -402,3 +402,18 @@ def make_model(cfg, num_class, camera_num, view_num):
         model = Backbone(num_class, cfg)
         print('===========building ResNet===========')
     return model
+
+def make_ref_model(cfg, num_class, camera_num, view_num):
+    cfg.MODEL.NAME = cfg.MODEL.REF_NAME
+    cfg.MODEL.PRETRAIN_PATH = cfg.MODEL.REF_MODEL_PATH
+    if cfg.MODEL.NAME == 'transformer':
+        if cfg.MODEL.JPM:
+            model = build_transformer_local(num_class, camera_num, view_num, cfg, __factory_T_type, rearrange=cfg.MODEL.RE_ARRANGE)
+            print('===========building transformer with JPM module ===========')
+        else:
+            model = build_transformer(num_class, camera_num, view_num, cfg, __factory_T_type)
+            print('===========building transformer===========')
+    else:
+        model = Backbone(num_class, cfg)
+        print('===========building ResNet===========')
+    return model
