@@ -5,7 +5,7 @@ from model import make_model,make_ref_model
 from solver import make_optimizer
 from solver.scheduler_factory import create_scheduler
 from loss import make_loss
-from processor import do_train
+from processor import do_train,do_train_with_distillation
 import random
 import torch
 import numpy as np
