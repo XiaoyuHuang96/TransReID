@@ -3,7 +3,7 @@ from config import cfg
 import argparse
 from datasets import make_dataloader
 from model import make_model
-from processor import do_inference
+from processor import do_inference_small
 from utils.logger import setup_logger
 
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     if cfg.DATASETS.NAMES == 'VehicleID':
         for trial in range(10):
             train_loader, train_loader_normal, val_loader, num_query, num_classes, camera_num, view_num = make_dataloader(cfg)
-            rank_1, rank5 = do_inference(cfg,
+            rank_1, rank5 = do_inference_small(cfg,
                  model,
                  val_loader,
                  num_query)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             logger.info("rank_1:{}, rank_5 {} : trial : {}".format(rank_1, rank5, trial))
         logger.info("sum_rank_1:{:.1%}, sum_rank_5 {:.1%}".format(all_rank_1.sum()/10.0, all_rank_5.sum()/10.0))
     else:
-       do_inference(cfg,
+       do_inference_small(cfg,
                  model,
                  val_loader,
                  num_query)

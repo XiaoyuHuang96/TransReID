@@ -6,14 +6,14 @@ MODEL:
   IF_WITH_CENTER: 'no'
   NAME: 'transformer'
   NO_MARGIN: True
-  DEVICE_ID: ('3')
+  DEVICE_ID: ('5')
   TRANSFORMER_TYPE: 'vit_base_patch16_224_TransReID'
   STRIDE_SIZE: [16, 16]
   SIE_CAMERA: False
   SIE_COE: 3.0
   JPM: True
   RE_ARRANGE: True
-  WEIGHT: '../logs/cl_cuhk_sysu_vit_transreid_step1_nostep3/transformer_120.pth'
+  WEIGHT: '../logs/market_vit_transreid_step1/transformer_120.pth'
 
 
 INPUT:
@@ -26,8 +26,8 @@ INPUT:
   PIXEL_STD: [0.5, 0.5, 0.5]
 
 DATASETS:
-  NAMES: ('msmt17')
-  ROOT_DIR: ('../../data')
+  NAMES: ('cuhk_sysu')
+  ROOT_DIR: ('/home/gaofanqi/ai/dataset/')
 
 DATALOADER:
   SAMPLER: 'softmax_triplet'
@@ -47,17 +47,15 @@ SOLVER:
   WEIGHT_DECAY:  1e-4
   WEIGHT_DECAY_BIAS: 1e-4
   BIAS_LR_FACTOR: 2
-  DISTILL_PERIOD: 0
-  DISTILL_RATIO: 0.1
 
 TEST:
   EVAL: True
   IMS_PER_BATCH: 256
   RE_RANKING: False
-  WEIGHT: '../logs/cl_msmt17_vit_transreid_step1_nostep3/transformer_120.pth'
+  WEIGHT: '../logs/cl_cuhk_sysu_vit_transreid_step1_nostep3/transformer_120.pth'
   NECK_FEAT: 'before'
   FEAT_NORM: 'yes'
 
-OUTPUT_DIR: '../logs/cl_msmt17_vit_transreid_step1_nostep3'
+OUTPUT_DIR: '../logs/cl_cuhk_sysu_vit_transreid_step1_nostep3'
 
 

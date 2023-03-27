@@ -27,8 +27,8 @@ from itertools import repeat
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch._six import container_abcs
-
+# from torch._six import container_abcs
+import collections.abc as container_abcs
 
 # From PyTorch internals
 def _ntuple(n):
@@ -278,6 +278,7 @@ class PatchEmbed_overlap(nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
+        # print(x.dtype)
 
         # FIXME look at relaxing size constraints
         assert H == self.img_size[0] and W == self.img_size[1], \
@@ -409,6 +410,7 @@ class TransReID(nn.Module):
 
     def load_param(self, model_path):
         param_dict = torch.load(model_path, map_location='cpu')
+        # print("param_dict",param_dict.keys())
         if 'model' in param_dict:
             param_dict = param_dict['model']
         if 'state_dict' in param_dict:

@@ -13,6 +13,8 @@ import torch.distributed as dist
 from .occ_duke import OCC_DukeMTMCreID
 from .vehicleid import VehicleID
 from .veri import VeRi
+from .cuhk_sysu import CUHK_SYSU
+from .viper import VIPeR
 __factory = {
     'market1501': Market1501,
     'dukemtmc': DukeMTMCreID,
@@ -20,6 +22,8 @@ __factory = {
     'occ_duke': OCC_DukeMTMCreID,
     'veri': VeRi,
     'VehicleID': VehicleID,
+    'cuhk_sysu': CUHK_SYSU,
+    'viper': VIPeR,
 }
 
 def train_collate_fn(batch):
@@ -77,7 +81,7 @@ def make_dataloader(cfg):
                 num_workers=num_workers,
                 batch_sampler=batch_sampler,
                 collate_fn=train_collate_fn,
-                pin_memory=True,
+                pin_memory=False,
             )
         else:
             train_loader = DataLoader(
@@ -105,3 +109,197 @@ def make_dataloader(cfg):
         collate_fn=val_collate_fn
     )
     return train_loader, train_loader_normal, val_loader, len(dataset.query), num_classes, cam_num, view_num
+
+
+def make_replay_dataloader(cfg):
+    train_transforms = T.Compose([
+            T.Resize(cfg.INPUT.SIZE_TRAIN, interpolation=3),
+            T.RandomHorizontalFlip(p=cfg.INPUT.PROB),
+            T.Pad(cfg.INPUT.PADDING),
+            T.RandomCrop(cfg.INPUT.SIZE_TRAIN),
+            T.ToTensor(),
+            T.Normalize(mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD),
+            RandomErasing(probability=cfg.INPUT.RE_PROB, mode='pixel', max_count=1, device='cpu'),
+            # RandomErasing(probability=cfg.INPUT.RE_PROB, mean=cfg.INPUT.PIXEL_MEAN)
+        ])
+
+    val_transforms = T.Compose([
+        T.Resize(cfg.INPUT.SIZE_TEST),
+        T.ToTensor(),
+        T.Normalize(mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD)
+    ])
+
+    num_workers = cfg.DATALOADER.NUM_WORKERS
+
+    dataset = __factory[cfg.DATASETS.REPLAY_NAMES](root=cfg.DATASETS.ROOT_DIR)
+
+    train_set = ImageDataset(dataset.train, train_transforms)
+    train_set_normal = ImageDataset(dataset.train, val_transforms)
+    num_classes = dataset.num_train_pids
+    cam_num = dataset.num_train_cams
+    view_num = dataset.num_train_vids
+
+    if 'triplet' in cfg.DATALOADER.SAMPLER:
+        if cfg.MODEL.DIST_TRAIN:
+            print('DIST_TRAIN START')
+            mini_batch_size = cfg.SOLVER.IMS_PER_BATCH // dist.get_world_size()
+            data_sampler = RandomIdentitySampler_DDP(dataset.train, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE)
+            batch_sampler = torch.utils.data.sampler.BatchSampler(data_sampler, mini_batch_size, True)
+            train_loader = torch.utils.data.DataLoader(
+                train_set,
+                num_workers=num_workers,
+                batch_sampler=batch_sampler,
+                collate_fn=train_collate_fn,
+                pin_memory=False,
+            )
+        else:
+            train_loader = DataLoader(
+                train_set, batch_size=cfg.SOLVER.IMS_PER_BATCH,
+                sampler=RandomIdentitySampler(dataset.train, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE),
+                num_workers=num_workers, collate_fn=train_collate_fn
+            )
+    elif cfg.DATALOADER.SAMPLER == 'softmax':
+        print('using softmax sampler')
+        train_loader = DataLoader(
+            train_set, batch_size=cfg.SOLVER.IMS_PER_BATCH, shuffle=True, num_workers=num_workers,
+            collate_fn=train_collate_fn
+        )
+    else:
+        print('unsupported sampler! expected softmax or triplet but got {}'.format(cfg.SAMPLER))
+
+    val_set = ImageDataset(dataset.query + dataset.gallery, val_transforms)
+
+    val_loader = DataLoader(
+        val_set, batch_size=cfg.TEST.IMS_PER_BATCH, shuffle=False, num_workers=num_workers,
+        collate_fn=val_collate_fn
+    )
+    train_loader_normal = DataLoader(
+        train_set_normal, batch_size=cfg.TEST.IMS_PER_BATCH, shuffle=False, num_workers=num_workers,
+        collate_fn=val_collate_fn
+    )
+    return train_loader, train_loader_normal, val_loader, len(dataset.query), num_classes, cam_num, view_num
+
+
+def getDatasetClassNum(root_dir, datasetName):
+    dataset = __factory[datasetName](root=root_dir)
+    num_classes = dataset.num_train_pids
+    return num_classes
+
+
+def extract_features(model, data_loader):
+    features_all = []
+    labels_all = []
+    fnames_all = []
+    camids_all = []
+    views_all = []
+    model.eval()
+    with torch.no_grad():
+        for i, (imgs, fnames, pids, cids, domains) in enumerate(data_loader):
+            features = model(imgs)
+            for fname, feature, pid, cid, view in zip(fnames, features, pids, cids, domains):
+                features_all.append(feature)
+                labels_all.append(int(pid))
+                fnames_all.append(fname)
+                camids_all.append(cid)
+                views_all.append(view)
+    model.train()
+    return features_all, labels_all, fnames_all, camids_all, views_all
+
+def select_replay_samples(cfg, model, training_phase=0, add_num=0, old_datas=None, select_samples=2):
+    train_transforms = T.Compose([
+        T.Resize(cfg.INPUT.SIZE_TRAIN, interpolation=3),
+        T.RandomHorizontalFlip(p=cfg.INPUT.PROB),
+        T.Pad(cfg.INPUT.PADDING),
+        T.RandomCrop(cfg.INPUT.SIZE_TRAIN),
+        T.ToTensor(),
+        T.Normalize(mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD),
+        RandomErasing(probability=cfg.INPUT.RE_PROB, mode='pixel', max_count=1, device='cpu'),
+        # RandomErasing(probability=cfg.INPUT.RE_PROB, mean=cfg.INPUT.PIXEL_MEAN)
+    ])
+
+    num_workers = cfg.DATALOADER.NUM_WORKERS
+
+    dataset = __factory[cfg.DATASETS.REPLAY_NAMES](root=cfg.DATASETS.ROOT_DIR)
+
+    train_set = ImageDataset(dataset.train, train_transforms)
+    train_set_normal = ImageDataset(dataset.train, val_transforms)
+    num_classes = dataset.num_train_pids
+    cam_num = dataset.num_train_cams
+    view_num = dataset.num_train_vids
+
+
+    replay_data = []
+    # normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
+    #                          std=[0.229, 0.224, 0.225])
+    # transformer = T.Compose([
+    #     T.Resize((256, 128), interpolation=3),
+    #     T.ToTensor(),
+    #     normalizer
+    # ])
+
+    # train_transformer = T.Compose([
+    #     T.Resize((256, 128), interpolation=3),
+    #     T.RandomHorizontalFlip(p=0.5),
+    #     T.Pad(10),
+    #     T.RandomCrop((256, 128)),
+    #     T.ToTensor(),
+    #     normalizer,
+    #     T.RandomErasing(probability=0.5, mean=[0.485, 0.456, 0.406])
+    # ])
+
+    # train_loader = DataLoader(Preprocessor(dataset.train, root=dataset.images_dir,transform=transformer),
+    #                           batch_size=128, num_workers=4, shuffle=True, pin_memory=False, drop_last=False)
+    train_loader = DataLoader(
+                train_set, batch_size=cfg.SOLVER.IMS_PER_BATCH,
+                sampler=RandomIdentitySampler(dataset.train, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE),
+                num_workers=num_workers, collate_fn=train_collate_fn
+            )
+
+    features_all, labels_all, fnames_all, camids_all, views_all = extract_features(model, train_loader)
+
+    pid2features = collections.defaultdict(list)
+    pid2fnames = collections.defaultdict(list)
+    pid2cids = collections.defaultdict(list)
+    pid2views = collections.defaultdict(list)
+
+    for feature, pid, fname, cid, view in zip(features_all, labels_all, fnames_all, camids_all, views_all):
+        pid2features[pid].append(feature)
+        pid2fnames[pid].append(fname)
+        pid2cids[pid].append(cid)
+        pid2views[pid].append(view)
+
+    labels_all = list(set(labels_all))
+
+    class_centers = [torch.stack(pid2features[pid]).mean(0) for pid in sorted(pid2features.keys())]
+    class_centers = F.normalize(torch.stack(class_centers), dim=1)
+    select_pids = np.random.choice(labels_all, 250, replace=True)
+    for pid in select_pids:
+        feautures_single_pid = F.normalize(torch.stack(pid2features[pid]), dim=1, p=2)
+        center_single_pid = class_centers[pid]
+        simi = torch.mm(feautures_single_pid, center_single_pid.unsqueeze(0).t())
+        simi_sort_inx = torch.sort(simi, dim=0)[1][:2]
+        for id in simi_sort_inx:
+            replay_data.append((pid2fnames[pid][id], pid+add_num, pid2cids[pid][id], pid2views[pid][id], training_phase-1))
+
+    if old_datas is None:
+        # data_loader_replay = DataLoader(Preprocessor(replay_data, dataset.images_dir, train_transformer),
+        #                      batch_size=128,num_workers=8, sampler=RandomIdentitySampler(replay_data, select_samples),
+        #                      pin_memory=False, drop_last=True)
+        data_loader_replay = DataLoader(
+            ImageDataset(replay_data, train_transformer), batch_size=cfg.SOLVER.IMS_PER_BATCH,
+            sampler=RandomIdentitySampler(replay_data, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE),
+            num_workers=num_workers, collate_fn=train_collate_fn
+        )
+    else:
+        replay_data.extend(old_datas)
+        # data_loader_replay = DataLoader(Preprocessor(replay_data, dataset.images_dir, train_transformer),
+        #                      batch_size=128,num_workers=8,
+        #                      sampler=MultiDomainRandomIdentitySampler(replay_data, select_samples),
+        #                      pin_memory=False, drop_last=True)
+        data_loader_replay = DataLoader(
+            ImageDataset(replay_data, train_transformer), batch_size=cfg.SOLVER.IMS_PER_BATCH,
+            sampler=RandomIdentitySampler(replay_data, cfg.SOLVER.IMS_PER_BATCH, cfg.DATALOADER.NUM_INSTANCE),
+            num_workers=num_workers, collate_fn=train_collate_fn
+        )
+
+    return data_loader_replay, replay_data

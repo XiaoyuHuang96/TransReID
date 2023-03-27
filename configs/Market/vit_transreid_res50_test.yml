@@ -1,20 +1,35 @@
 MODEL:
   PRETRAIN_CHOICE: 'imagenet'
-  PRETRAIN_PATH: '/home/gaofanqi/.cache/torch/checkpoints/jx_vit_base_p16_224-80ecf9dd.pth'
+  PRETRAIN_PATH: '/home/gaofanqi/.cache/torch/checkpoints/resnet50-19c8e357.pth'
   METRIC_LOSS_TYPE: 'triplet'
   IF_LABELSMOOTH: 'off'
   IF_WITH_CENTER: 'no'
-  NAME: 'transformer'
+  NAME: 'resnet50'
   NO_MARGIN: True
-  DEVICE_ID: ('3')
+  DEVICE_ID: ('5')
   TRANSFORMER_TYPE: 'vit_base_patch16_224_TransReID'
   STRIDE_SIZE: [16, 16]
-  SIE_CAMERA: False
+  SIE_CAMERA: True
   SIE_COE: 3.0
   JPM: True
   RE_ARRANGE: True
-  WEIGHT: '../logs/cl_cuhk_sysu_vit_transreid_step1_nostep3/transformer_120.pth'
+  WEIGHT: '../logs/market_vit_transreid_step2/transformer_120.pth'
 
+SMALL:
+  PRETRAIN_CHOICE: 'imagenet'
+  PRETRAIN_PATH: '/home/gaofanqi/.cache/torch/checkpoints/resnet50-19c8e357.pth'
+  METRIC_LOSS_TYPE: 'triplet'
+  IF_LABELSMOOTH: 'off'
+  IF_WITH_CENTER: 'no'
+  NAME: 'resnet50'
+  NO_MARGIN: True
+  DEVICE_ID: ('6')
+  TRANSFORMER_TYPE: 'vit_base_patch16_224_TransReID'
+  STRIDE_SIZE: [16, 16]
+  SIE_CAMERA: True
+  SIE_COE: 3.0
+  JPM: True
+  RE_ARRANGE: True
 
 INPUT:
   SIZE_TRAIN: [256, 128]
@@ -26,8 +41,8 @@ INPUT:
   PIXEL_STD: [0.5, 0.5, 0.5]
 
 DATASETS:
-  NAMES: ('msmt17')
-  ROOT_DIR: ('../../data')
+  NAMES: ('market1501')
+  ROOT_DIR: ('/home/gaofanqi/ai/dataset/')
 
 DATALOADER:
   SAMPLER: 'softmax_triplet'
@@ -42,22 +57,20 @@ SOLVER:
   WARMUP_METHOD: 'linear'
   LARGE_FC_LR: False
   CHECKPOINT_PERIOD: 40
-  LOG_PERIOD: 20
+  LOG_PERIOD: 10
   EVAL_PERIOD: 40
   WEIGHT_DECAY:  1e-4
   WEIGHT_DECAY_BIAS: 1e-4
   BIAS_LR_FACTOR: 2
-  DISTILL_PERIOD: 0
-  DISTILL_RATIO: 0.1
 
 TEST:
   EVAL: True
   IMS_PER_BATCH: 256
   RE_RANKING: False
-  WEIGHT: '../logs/cl_msmt17_vit_transreid_step1_nostep3/transformer_120.pth'
+  WEIGHT: '../logs/market_vit_transreid_step2/transformer_120.pth'
   NECK_FEAT: 'before'
   FEAT_NORM: 'yes'
 
-OUTPUT_DIR: '../logs/cl_msmt17_vit_transreid_step1_nostep3'
+OUTPUT_DIR: '../logs/market_vit_transreid_step2'
 
 
