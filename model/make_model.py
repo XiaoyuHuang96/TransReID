@@ -517,8 +517,15 @@ def make_model(cfg, num_class, camera_num, view_num):
         print('===========building ResNet===========')
     return model
 
+<<<<<<< HEAD
 def make_small_model(cfg, num_class, camera_num, view_num):
     if cfg.SMALL.NAME == 'transformer':
+=======
+def make_ref_model(cfg, num_class, camera_num, view_num):
+    cfg.MODEL.NAME = cfg.MODEL.REF_NAME
+    cfg.MODEL.PRETRAIN_PATH = cfg.MODEL.REF_MODEL_PATH
+    if cfg.MODEL.NAME == 'transformer':
+>>>>>>> cb5f10b53cf01fd0c36979d263954f71a9d42a6a
         if cfg.MODEL.JPM:
             model = build_transformer_local(num_class, camera_num, view_num, cfg, __factory_T_type, rearrange=cfg.MODEL.RE_ARRANGE)
             print('===========building transformer with JPM module ===========')
@@ -526,6 +533,12 @@ def make_small_model(cfg, num_class, camera_num, view_num):
             model = build_transformer(num_class, camera_num, view_num, cfg, __factory_T_type)
             print('===========building transformer===========')
     else:
+<<<<<<< HEAD
         model = BackboneSmall(num_class, cfg)
         print('===========building ResNet===========')
     return model
+=======
+        model = Backbone(num_class, cfg)
+        print('===========building ResNet===========')
+    return model
+>>>>>>> cb5f10b53cf01fd0c36979d263954f71a9d42a6a

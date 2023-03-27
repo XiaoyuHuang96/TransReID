@@ -626,6 +626,7 @@ def do_train_transformer_distill(cfg,
 
     evaluator = R1_mAP_eval(num_query, max_rank=50, feat_norm=cfg.TEST.FEAT_NORM)
     scaler = amp.GradScaler()
+    
     # train
     for epoch in range(1, epochs + 1):
         start_time = time.time()
