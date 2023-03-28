@@ -68,6 +68,69 @@ _C.MODEL.SIE_COE = 3.0
 _C.MODEL.SIE_CAMERA = False
 _C.MODEL.SIE_VIEW = False
 
+# Path to trained model
+_C.MODEL.WEIGHT = ""
+
+# -----------------------------------------------------------------------------
+# SMALLMODEL
+# -----------------------------------------------------------------------------
+_C.SMALL = CN()
+# Using cuda or cpu for training
+_C.SMALL.DEVICE = "cuda"
+# ID number of GPU
+_C.SMALL.DEVICE_ID = '0'
+# Name of backbone
+_C.SMALL.NAME = 'resnet50'
+# Last stride of backbone
+_C.SMALL.LAST_STRIDE = 1
+# Path to pretrained model of backbone
+_C.SMALL.PRETRAIN_PATH = ''
+
+# Use ImageNet pretrained model to initialize backbone or use self trained model to initialize the whole model
+# Options: 'imagenet' , 'self' , 'finetune'
+_C.SMALL.PRETRAIN_CHOICE = 'imagenet'
+
+# If train with BNNeck, options: 'bnneck' or 'no'
+_C.SMALL.NECK = 'bnneck'
+# If train loss include center loss, options: 'yes' or 'no'. Loss with center loss has different optimizer configuration
+_C.SMALL.IF_WITH_CENTER = 'no'
+
+_C.SMALL.ID_LOSS_TYPE = 'softmax'
+_C.SMALL.ID_LOSS_WEIGHT = 1.0
+_C.SMALL.TRIPLET_LOSS_WEIGHT = 1.0
+
+_C.SMALL.METRIC_LOSS_TYPE = 'triplet'
+# If train with multi-gpu ddp mode, options: 'True', 'False'
+_C.SMALL.DIST_TRAIN = False
+# If train with soft triplet loss, options: 'True', 'False'
+_C.SMALL.NO_MARGIN = False
+# If train with label smooth, options: 'on', 'off'
+_C.SMALL.IF_LABELSMOOTH = 'on'
+# If train with arcface loss, options: 'True', 'False'
+_C.SMALL.COS_LAYER = False
+
+# Transformer setting
+_C.SMALL.DROP_PATH = 0.1
+_C.SMALL.DROP_OUT = 0.0
+_C.SMALL.ATT_DROP_RATE = 0.0
+_C.SMALL.TRANSFORMER_TYPE = 'None'
+_C.SMALL.STRIDE_SIZE = [16, 16]
+
+# JPM Parameter
+_C.SMALL.JPM = False
+_C.SMALL.SHIFT_NUM = 5
+_C.SMALL.SHUFFLE_GROUP = 2
+_C.SMALL.DEVIDE_LENGTH = 4
+_C.SMALL.RE_ARRANGE = True
+
+# SIE Parameter
+_C.SMALL.SIE_COE = 3.0
+_C.SMALL.SIE_CAMERA = False
+_C.SMALL.SIE_VIEW = False
+
+# Path to trained model
+_C.SMALL.WEIGHT = ""
+
 # -----------------------------------------------------------------------------
 # INPUT
 # -----------------------------------------------------------------------------
@@ -95,6 +158,8 @@ _C.DATASETS = CN()
 _C.DATASETS.NAMES = ('market1501')
 # Root directory where datasets should be used (and downloaded if not found)
 _C.DATASETS.ROOT_DIR = ('../data')
+# List of the replay dataset names for training, as present in paths_catalog.py
+_C.DATASETS.REPLAY_NAMES = ('market1501')
 
 
 # -----------------------------------------------------------------------------
@@ -162,6 +227,23 @@ _C.SOLVER.EVAL_PERIOD = 10
 # contain 16 images per batch
 _C.SOLVER.IMS_PER_BATCH = 64
 
+# epoch number of distillation
+_C.SOLVER.DISTILL_PERIOD = 0
+# ratio of distillation
+_C.SOLVER.DISTILL_RATIO = 0.1
+# transformer distillation type
+_C.SOLVER.USE_TRAIN_LOSS = True
+# classifier use last dataset's cls id
+_C.SOLVER.USE_REPLAY_CLASS = False
+# training use last dataset's images
+_C.SOLVER.USE_REPLAY_DATASET = False
+# training phase
+_C.SOLVER.TRAINING_PHASE = 1
+# path for replay dataset
+_C.SOLVER.REPLAY_DATASET_PATH = ''
+# training use last dataset's images with distill
+_C.SOLVER.USE_REPLAY_DISTILL = False
+
 # ---------------------------------------------------------------------------- #
 # TEST
 # ---------------------------------------------------------------------------- #
@@ -182,6 +264,10 @@ _C.TEST.FEAT_NORM = 'yes'
 _C.TEST.DIST_MAT = "dist_mat.npy"
 # Whether calculate the eval score option: 'True', 'False'
 _C.TEST.EVAL = False
+
+# test model option: 'transformer', 'resnet50'
+_C.TEST.EVAL_MODEL = 'transformer'
+
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #
