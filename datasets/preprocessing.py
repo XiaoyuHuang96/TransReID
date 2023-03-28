@@ -108,3 +108,4 @@ class Preprocessor28(Dataset):
             img = self.transform(img)
 
         return img, fname, pid, camid, domain
+

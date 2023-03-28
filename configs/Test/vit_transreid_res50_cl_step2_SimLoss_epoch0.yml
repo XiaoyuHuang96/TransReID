@@ -77,3 +77,4 @@ TEST:
 OUTPUT_DIR: '../logs/cl_cuhk_sysu_vit_transreid_distill_step2_SimLoss_noreplay_vipermodel_nostep3'
 
 
+

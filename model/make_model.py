@@ -529,3 +529,4 @@ def make_small_model(cfg, num_class, camera_num, view_num):
         model = BackboneSmall(num_class, cfg)
         print('===========building ResNet===========')
     return model
+

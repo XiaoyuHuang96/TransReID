@@ -68,6 +68,7 @@ class RandomIdentitySampler(Sampler):
     def __len__(self):
         return self.length
 
+
 class RandomIdentitySamplerNoBatch(Sampler):
     def __init__(self, data_source, num_instances):
         self.data_source = data_source
@@ -94,6 +95,7 @@ class RandomIdentitySamplerNoBatch(Sampler):
             ret.extend(t)
         return iter(ret)
         
+
 class MultiDomainRandomIdentitySampler(Sampler):
     def __init__(self, data_source, num_instances):
         self.data_source = data_source

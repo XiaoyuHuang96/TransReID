@@ -87,7 +87,9 @@ if __name__ == '__main__':
         model.load_param_distill_replay(cfg.MODEL.WEIGHT)
 
 
+
     small_model = make_model(cfg, num_class=num_classes + replay_num_classes, camera_num=camera_num, view_num = view_num)
+
     if(len(cfg.SMALL.WEIGHT) > 0):
         small_model.load_param_distill_replay(cfg.SMALL.WEIGHT)
 

@@ -16,6 +16,7 @@ python train_small.py --config_file configs/CUHK_SYSU/vit_transreid_res50_cl_ste
 python train_small_SimLoss.py --config_file configs/CUHK_SYSU/vit_transreid_res50.yml MODEL.DEVICE_ID "('2')"
 
 
+
 # noreplay cls
 # step1
 python train_noreplay_cls_step1.py --config_file configs/CUHK_SYSU/vit_transreid_cl_step1_noreplay_cls.yml MODEL.DEVICE_ID "('2')"
@@ -42,3 +43,4 @@ python train_replay.py --config_file configs/CUHK_SYSU/vit_transreid_cl_step1_re
 # python train_small_SimLoss_noreplay_cls_step2.py --config_file configs/Market/vit_transreid_res50_cl_step2_SimLoss_noreplay_cls_ImageNet.yml MODEL.DEVICE_ID "('2')"
 # step2 viper resnet50 pretrain
 python train_small_SimLoss_replay_cls_step2.py --config_file configs/CUHK_SYSU/vit_transreid_res50_cl_step2_SimLoss_replay_cls_vipermodel.yml MODEL.DEVICE_ID "('3')"
+

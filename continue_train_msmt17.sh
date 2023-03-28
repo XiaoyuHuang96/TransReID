@@ -18,6 +18,7 @@ python train_small_SimLoss.py --config_file configs/MSMT17/vit_transreid_res50_c
 python train_transformer.py --config_file configs/MSMT17/vit_transreid_res50_cl_step3.yml MODEL.DEVICE_ID "('3')"
 
 
+
 # replay cls dataset
 # step1
 python train_replay.py --config_file configs/MSMT17/vit_transreid_cl_step1_replay_cls.yml MODEL.DEVICE_ID "('2')"

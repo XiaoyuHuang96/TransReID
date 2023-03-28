@@ -51,6 +51,7 @@ SOLVER:
   USE_REPLAY_DATASET: False
   TRAINING_PHASE: 3
 
+
 TEST:
   EVAL: True
   IMS_PER_BATCH: 256
@@ -60,5 +61,4 @@ TEST:
   FEAT_NORM: 'yes'
 
 OUTPUT_DIR: '../logs/cl_cuhk_sysu_vit_transreid_step1_nostep3_noreplay_cls'
-
 

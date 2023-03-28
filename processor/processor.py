@@ -291,6 +291,7 @@ def do_train_small(cfg,
              loss_fn,
              ref_loss_fn,
              num_query, local_rank, replay_dataloader=None):
+
     log_period = cfg.SOLVER.LOG_PERIOD
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
     eval_period = cfg.SOLVER.EVAL_PERIOD
@@ -373,6 +374,7 @@ def do_train_small(cfg,
                         ref_loss2 = ref_loss_fn(feat_rp, ref_feat_rp)
                         loss += ref_loss2 * distill_ratio
                         ref_loss += ref_loss2
+
                     
 
             scaler.scale(loss).backward()
@@ -657,6 +659,7 @@ def do_train_transformer_distill(cfg,
 
     evaluator = R1_mAP_eval(num_query, max_rank=50, feat_norm=cfg.TEST.FEAT_NORM)
     scaler = amp.GradScaler()
+
     # train
     for epoch in range(1, epochs + 1):
         start_time = time.time()

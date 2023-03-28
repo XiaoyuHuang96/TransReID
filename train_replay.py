@@ -92,12 +92,14 @@ if __name__ == '__main__':
     if(len(cfg.MODEL.WEIGHT) > 0):
         model.load_param_distill_replay(cfg.MODEL.WEIGHT)
 
+
     logger.info("generating training phase {} replay dataset...".format(cfg.SOLVER.TRAINING_PHASE))
     replay_dataloader, replay_dataset = select_replay_samples(cfg, model, training_phase=cfg.SOLVER.TRAINING_PHASE,\
                                                    add_num=add_num, old_datas=old_replay_dataset)
     
     torch.save(replay_dataset,
                 os.path.join(cfg.OUTPUT_DIR, 'old_replay_data_phase{}.pth'.format(cfg.SOLVER.TRAINING_PHASE)))
+
     logger.info("saved training phase {} replay dataset".format(cfg.SOLVER.TRAINING_PHASE))
 
     loss_func, center_criterion = make_loss(cfg, num_classes=num_classes + replay_num_classes)
